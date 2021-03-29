@@ -73,7 +73,7 @@ module SSLTest
       @logger&.debug { "SSLTest   + OCSP: fetch URI #{uri}" }
       path = uri.path == "" ? "/" : uri.path
       post = Net::HTTP::Post.new(path, 'content-type' => 'application/ocsp-request')
-
+      puts "overriden ocsp"
       http_response = Net::HTTP.start(uri.hostname, uri.port) do |http|
         http.open_timeout = open_timeout
         http.read_timeout = read_timeout
