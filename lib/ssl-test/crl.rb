@@ -61,10 +61,6 @@ module SSLTest
 
       @logger&.debug { "SSLTest   + CRL: fetch URI #{uri}" }
       path = uri.path == "" ? "/" : uri.path
-      http = Net::HTTP.new(uri.hostname, uri.port)
-      http.open_timeout = open_timeout
-      http.read_timeout = read_timeout
-
       req = Net::HTTP::Get.new(path)
       # Include conditional caching headers from cache to save bandwidth if list didn't change (304)
       if etag = cache_entry&.fetch(:etag)
@@ -72,7 +68,11 @@ module SSLTest
       elsif last_mod = cache_entry&.fetch(:last_mod)
         req["If-Modified-Since"] = last_mod
       end
-      http_response = http.request(req)
+      http_response = Net::HTTP.start(uri.hostname, uri.port) do |http|
+        http.open_timeout = open_timeout
+        http.read_timeout = read_timeout
+        http.original_request(req)
+      end
       case http_response
       when Net::HTTPNotModified
         # No changes, bump cache expiration time and return cached body

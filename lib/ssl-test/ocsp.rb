@@ -72,11 +72,13 @@ module SSLTest
 
       @logger&.debug { "SSLTest   + OCSP: fetch URI #{uri}" }
       path = uri.path == "" ? "/" : uri.path
-      http = Net::HTTP.new(uri.hostname, uri.port)
-      http.open_timeout = open_timeout
-      http.read_timeout = read_timeout
+      post = Net::HTTP::Post.new(path, 'content-type' => 'application/ocsp-request')
 
-      http_response = http.post(path, data, "content-type" => "application/ocsp-request")
+      http_response = Net::HTTP.start(uri.hostname, uri.port) do |http|
+        http.open_timeout = open_timeout
+        http.read_timeout = read_timeout
+        http.original_request(post, data)
+      end
       case http_response
       when Net::HTTPSuccess
         @logger&.debug { "SSLTest   + OCSP: 200 OK (#{http_response.body.bytesize} bytes)" }
